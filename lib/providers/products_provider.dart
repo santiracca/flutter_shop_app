@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import './product.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class Products with ChangeNotifier {
   List<Product> _items = [
@@ -49,15 +51,31 @@ class Products with ChangeNotifier {
     return _items.firstWhere((prod) => prod.id == id);
   }
 
-  void addProduct(Product product) {
-    final newProduct = Product(
-        id: DateTime.now().toString(),
+  Future<void> addProduct(Product product) {
+    const url = 'https://flutter-shop-app-ddc42.firebaseio.com/products.json';
+    return http
+        .post(url,
+            body: json.encode({
+              'title': product.title,
+              'description': product.description,
+              'imageUrl': product.imageUrl,
+              'price': product.price,
+              'isFavorite': product.isFavorite
+            }))
+        .then((response) {
+      final newProduct = Product(
+        id: json.decode(response.body)['name'],
         title: product.title,
         price: product.price,
         description: product.description,
-        imageUrl: product.imageUrl);
-    _items.add(newProduct);
-    notifyListeners();
+        imageUrl: product.imageUrl,
+      );
+      _items.add(newProduct);
+      notifyListeners();
+    }).catchError((error) {
+      print(error);
+      throw error;
+    });
   }
 
   void updateProduct(String id, Product newProduct) {
