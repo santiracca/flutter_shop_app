@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shop_app/providers/cart_provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class OrderItem {
   final String id;
@@ -16,20 +18,83 @@ class OrderItem {
 
 class Orders with ChangeNotifier {
   List<OrderItem> _orders = [];
+  var _isLoading = false;
 
   List<OrderItem> get orders {
     return [..._orders];
   }
 
-  void addOrder(List<CartItem> cartProducts, double total) {
-    _orders.insert(
-      0,
-      OrderItem(
-          id: DateTime.now().toString(),
+  bool get isLoading {
+    return _isLoading;
+  }
+
+  Future<void> fetchAndSetOrders() async {
+    const url = 'https://flutter-shop-app-ddc42.firebaseio.com/orders.json';
+    try {
+      final response = await http.get(url);
+      final extractedData = json.decode(response.body) as Map<String, dynamic>;
+      final List<OrderItem> loadedOrders = [];
+      extractedData.forEach((orderId, orderData) {
+        List<CartItem> orderProducts = [];
+        orderData['products'].forEach((val) {
+          orderProducts.add(CartItem(
+              id: val['id'],
+              price: val['price'],
+              quantity: val['quantity'],
+              title: val['title']));
+        });
+        loadedOrders.insert(
+            0,
+            OrderItem(
+                id: orderId,
+                amount: orderData['amount'],
+                dateTime: DateTime.parse(orderData['dateTime']),
+                products: orderProducts));
+      });
+      _orders = loadedOrders;
+      notifyListeners();
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  Future<void> addOrder(List<CartItem> cartProducts, double total) async {
+    _isLoading = true;
+    notifyListeners();
+    List<Map<String, dynamic>> products = [];
+    cartProducts.forEach((element) {
+      products.add({
+        'id': element.id,
+        'quantity': element.quantity,
+        'price': element.price,
+        'title': element.title
+      });
+    });
+    const url = 'https://flutter-shop-app-ddc42.firebaseio.com/orders.json';
+    final timestamp = DateTime.now();
+    try {
+      final response = await http.post(url,
+          body: json.encode({
+            'amount': total,
+            'products': products,
+            'dateTime': timestamp.toIso8601String(),
+          }));
+      _orders.insert(
+        0,
+        OrderItem(
+          id: json.decode(response.body)['name'],
           amount: total,
           products: cartProducts,
-          dateTime: DateTime.now()),
-    );
-    notifyListeners();
+          dateTime: timestamp,
+        ),
+      );
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      print(e);
+      _isLoading = false;
+      notifyListeners();
+      throw e;
+    }
   }
 }

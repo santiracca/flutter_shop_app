@@ -9,6 +9,7 @@ class CartScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<Cart>(context);
+    final isLoading = Provider.of<Orders>(context).isLoading;
 
     return Scaffold(
       appBar: AppBar(
@@ -35,16 +36,32 @@ class CartScreen extends StatelessWidget {
                     ),
                     backgroundColor: Theme.of(context).primaryColor,
                   ),
-                  FlatButton(
-                      child: Text(
-                        'ORDER  NOW',
-                      ),
-                      textColor: Theme.of(context).primaryColor,
-                      onPressed: () {
-                        Provider.of<Orders>(context, listen: false).addOrder(
-                            cart.items.values.toList(), cart.totalAmount);
-                        cart.clear();
-                      })
+                  isLoading
+                      ? Center(
+                          child: Container(
+                              margin: EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 0),
+                              child: CircularProgressIndicator()),
+                        )
+                      : FlatButton(
+                          child: Text(
+                            'ORDER  NOW',
+                          ),
+                          textColor: Theme.of(context).primaryColor,
+                          onPressed: cart.items.length == 0
+                              ? null
+                              : () async {
+                                  try {
+                                    await Provider.of<Orders>(context,
+                                            listen: false)
+                                        .addOrder(cart.items.values.toList(),
+                                            cart.totalAmount);
+                                    cart.clear();
+                                  } catch (e) {
+                                    print(e);
+                                  }
+                                },
+                        )
                 ],
               ),
             ),
