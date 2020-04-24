@@ -9,7 +9,8 @@ class UserProductsScreen extends StatelessWidget {
   static const routeName = '/user-products';
 
   Future<void> _refreshProducts(BuildContext context) async {
-    await Provider.of<Products>(context).fetchAndSetProducts();
+    await Provider.of<Products>(context, listen: false)
+        .fetchAndSetProducts(true);
   }
 
   @override
@@ -29,21 +30,31 @@ class UserProductsScreen extends StatelessWidget {
         ],
       ),
       drawer: DrawerItem(),
-      body: RefreshIndicator(
-        onRefresh: () => _refreshProducts(context),
-        child: Padding(
-          padding: EdgeInsets.all(8),
-          child: ListView.builder(
-            itemCount: products.length,
-            itemBuilder: (_, i) => Column(
-              children: <Widget>[
-                UserProductItem(
-                    products[i].id, products[i].title, products[i].imageUrl),
-                Divider()
-              ],
-            ),
-          ),
-        ),
+      body: FutureBuilder(
+        future: _refreshProducts(context),
+        builder: (ctx, snapshot) =>
+            snapshot.connectionState == ConnectionState.waiting
+                ? Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : RefreshIndicator(
+                    onRefresh: () => _refreshProducts(context),
+                    child: Consumer<Products>(
+                      builder: (ctx, productsData, _) => Padding(
+                        padding: EdgeInsets.all(8),
+                        child: ListView.builder(
+                          itemCount: products.length,
+                          itemBuilder: (_, i) => Column(
+                            children: <Widget>[
+                              UserProductItem(products[i].id, products[i].title,
+                                  products[i].imageUrl),
+                              Divider()
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
       ),
     );
   }

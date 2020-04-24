@@ -12,6 +12,7 @@ import './providers/cart_provider.dart';
 import './screens/user_products_screen.dart';
 import './screens/edit_product_screen.dart';
 import './screens/auth.dart';
+import './screens/splash_screen.dart';
 
 void main() => runApp(MyApp());
 
@@ -22,15 +23,17 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider.value(value: Auth()),
         ChangeNotifierProxyProvider<Auth, Products>(
-          builder: (ctx, auth, previousProducts) => Products(auth.token,
-              previousProducts == null ? [] : previousProducts.items),
+          builder: (ctx, auth, previousProducts) => Products(
+              auth.token,
+              previousProducts == null ? [] : previousProducts.items,
+              auth.userId),
         ),
         ChangeNotifierProvider.value(
           value: Cart(),
         ),
         ChangeNotifierProxyProvider<Auth, Orders>(
-          builder: (ctx, auth, previousOrders) => Orders(
-              auth.token, previousOrders == null ? [] : previousOrders.orders),
+          builder: (ctx, auth, previousOrders) => Orders(auth.token,
+              auth.userId, previousOrders == null ? [] : previousOrders.orders),
         )
       ],
       child: Consumer<Auth>(
@@ -42,7 +45,16 @@ class MyApp extends StatelessWidget {
             accentColor: Colors.amber,
             fontFamily: 'Lato',
           ),
-          home: authData.isAuth ? ProductOverviewScreen() : AuthScreen(),
+          home: authData.isAuth
+              ? ProductOverviewScreen()
+              : FutureBuilder(
+                  future: authData.tryAutoLogin(),
+                  builder: (ctx, authResultSnapshot) =>
+                      authResultSnapshot.connectionState ==
+                              ConnectionState.waiting
+                          ? SplashScreen()
+                          : AuthScreen(),
+                ),
           routes: {
             ProductDetailScreen.routeName: (ctx) => ProductDetailScreen(),
             CartScreen.routeName: (ctx) => CartScreen(),

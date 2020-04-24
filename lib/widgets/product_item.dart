@@ -10,6 +10,7 @@ class ProductItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final cart = Provider.of<Cart>(context, listen: false);
     final token = Provider.of<Auth>(context, listen: false).token;
+    final userId = Provider.of<Auth>(context, listen: false).userId;
     final scaffold = Scaffold.of(context);
     return Consumer<Product>(
       builder: (ctx, product, child) => ClipRRect(
@@ -33,7 +34,7 @@ class ProductItem extends StatelessWidget {
               ),
               onPressed: () async {
                 try {
-                  await product.toggleFavoriteStatus(token);
+                  await product.toggleFavoriteStatus(token, userId);
                 } catch (e) {
                   scaffold.showSnackBar(SnackBar(
                     content: Text(
