@@ -23,8 +23,10 @@ class Products with ChangeNotifier {
     const url = 'https://flutter-shop-app-ddc42.firebaseio.com/products.json';
     try {
       final response = await http.get(url);
+
       final extractedData = json.decode(response.body) as Map<String, dynamic>;
       final List<Product> loadedProducts = [];
+
       extractedData.forEach((prodId, prodData) {
         loadedProducts.add(Product(
           id: prodId,
@@ -35,7 +37,7 @@ class Products with ChangeNotifier {
           imageUrl: prodData['imageUrl'],
         ));
       });
-      print(loadedProducts);
+
       _items = loadedProducts;
       notifyListeners();
     } catch (e) {
