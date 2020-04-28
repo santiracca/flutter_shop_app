@@ -13,6 +13,7 @@ import './screens/user_products_screen.dart';
 import './screens/edit_product_screen.dart';
 import './screens/auth.dart';
 import './screens/splash_screen.dart';
+import './helpers/custom_route.dart';
 
 void main() => runApp(MyApp());
 
@@ -38,13 +39,18 @@ class MyApp extends StatelessWidget {
       ],
       child: Consumer<Auth>(
         builder: (ctx, authData, _) => MaterialApp(
+          // initialRoute: ProductDetailScreen.routeName,
+
           debugShowCheckedModeBanner: false,
           title: 'Shop App',
           theme: ThemeData(
-            primarySwatch: Colors.teal,
-            accentColor: Colors.amber,
-            fontFamily: 'Lato',
-          ),
+              primarySwatch: Colors.teal,
+              accentColor: Colors.amber,
+              fontFamily: 'Lato',
+              pageTransitionsTheme: PageTransitionsTheme(builders: {
+                TargetPlatform.android: CustomPageTransitionBuider(),
+                TargetPlatform.iOS: CustomPageTransitionBuider(),
+              })),
           home: authData.isAuth
               ? ProductOverviewScreen()
               : FutureBuilder(
